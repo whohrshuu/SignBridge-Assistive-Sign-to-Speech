@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SignBridge | Assistive Sign-to-Speech</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg1: #0f172a;
+        --bg2: #172554;
+        --bg3: #1e293b;
+        --card: rgba(255, 255, 255, 0.12);
+        --border: rgba(255, 255, 255, 0.18);
+        --text: #f8fafc;
+        --muted: rgba(248, 250, 252, 0.78);
+        --accent: #38bdf8;
+        --danger: #fb7185;
+        --success: #4ade80;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, #1d4ed8 0%, transparent 35%),
+          radial-gradient(circle at bottom right, #7c3aed 0%, transparent 30%),
+          linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+        padding: 20px;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+
+      .glass {
+        background: var(--card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .landing {
+        min-height: calc(100vh - 40px);
+        display: grid;
+        place-items: center;
+      }
+
+      .hero {
+        padding: 36px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .hero h1 {
+        font-size: clamp(34px, 5vw, 64px);
+        line-height: 1.04;
+        margin: 0 0 16px;
+      }
+
+      .hero p {
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 16px;
+        margin: 0 0 24px;
+        max-width: 680px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: var(--muted);
+        margin-bottom: 20px;
+        font-size: 13px;
+      }
+
+      .hero-card {
+        padding: 24px;
+        min-height: 360px;
+        display: grid;
+        align-content: space-between;
+        gap: 16px;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .feature-item {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .feature-item strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .row,
+      .controls-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .btn {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        border-radius: 14px;
+        padding: 12px 18px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        background: linear-gradient(
+          135deg,
+          rgba(56, 189, 248, 0.55),
+          rgba(124, 58, 237, 0.55)
+        );
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+
+      .btn.danger {
+        background: rgba(251, 113, 133, 0.16);
+      }
+      .btn.success {
+        background: rgba(74, 222, 128, 0.16);
+      }
+
+      .select {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 15px;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+
+      .select option {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .select:focus {
+        border-color: rgba(56, 189, 248, 0.7);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+      }
+
+      .main-screen {
+        display: grid;
+        gap: 18px;
+      }
+
+      .topbar {
+        padding: 18px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .topbar h2 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      .topbar small {
+        color: var(--muted);
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .video-wrap {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      video,
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+      }
+
+      .section-title {
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .output-box,
+      .sentence-box,
+      .history-box,
+      .settings-box {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .big-text {
+        font-size: clamp(20px, 3vw, 32px);
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+
+      .sentence-display {
+        min-height: 90px;
+        font-size: 22px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .history-list {
+        display: grid;
+        gap: 10px;
+        max-height: 220px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .history-item {
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        line-height: 1.5;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .danger-output {
+        border-color: rgba(251, 113, 133, 0.55);
+        background: rgba(251, 113, 133, 0.12);
+      }
+
+      .spacer {
+        height: 2px;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .main-grid,
+        .mini-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          padding: 22px;
+        }
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <section id="landingScreen" class="landing">
+        <div class="hero glass">
+          <div>
+            <div class="badge">
+              Final Year Project · Assistive Communication
+            </div>
+            <h1>SignBridge</h1>
+            <p>
+              An assistive sign-to-speech prototype for deaf and non-speaking
+              users. This web app supports live hand detection, phrase building,
+              and speech output in real time using ASL-inspired emergency
+              gestures.
+            </p>
+            <div class="row">
+              <button class="btn primary" id="goToSetupBtn">
+                Start Project
+              </button>
+              <button class="btn" id="aboutBtn">About</button>
+            </div>
+          </div>
+
+          <div class="hero-card glass">
+            <div>
+              <div class="feature-list">
+                <div class="feature-item">
+                  <strong>Live Hand Detection</strong>
+                  Detects one or two hands in real time using MediaPipe in the
+                  browser.
+                </div>
+                <div class="feature-item">
+                  <strong>ASL Emergency Mapping</strong>
+                  Focuses on useful phrases like Help, Water, Food, Emergency,
+                  and Call Family.
+                </div>
+                <div class="feature-item">
+                  <strong>Speech Output</strong>
+                  Converts recognized phrases into audio for real-life
+                  communication support.
+                </div>
+              </div>
+            </div>
+            <div class="hint">
+              Note: this is a focused assistive prototype. It recognizes a
+              selected set of practical gestures, not the full ASL vocabulary.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="setupScreen" class="landing hidden">
+        <div class="glass" style="padding: 28px; max-width: 760px; width: 100%">
+          <div class="badge">Project Setup</div>
+          <h2 style="margin-top: 0; font-size: 34px">
+            Choose mode before starting
+          </h2>
+          <p style="color: var(--muted); line-height: 1.7; margin-bottom: 24px">
+            This version is optimized for ASL-only emergency communication with
+            a cleaner and lighter frontend.
+          </p>
+
+          <div class="mini-grid">
+            <div>
+              <div class="section-title">Language</div>
+              <select class="select" id="languageSelect">
+                <option value="ASL">ASL - American Sign Language</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="section-title">Speaker Mode</div>
+              <select class="select" id="speechModeSelect">
+                <option value="instant">
+                  Speak every detected phrase instantly
+                </option>
+                <option value="sentence">Speak only full sentence</option>
+                <option value="mute">Mute speaker</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+
+          <div class="mini-grid" style="margin-top: 16px">
+            <div>
+              <div class="section-title">Voice Language</div>
+              <select class="select" id="voiceLangSelect">
+                <option value="en-US">English</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="section-title">Recognition Style</div>
+              <select class="select" id="recognitionModeSelect">
+                <option value="prototype">Prototype mapped phrases</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controls-row" style="margin-top: 26px">
+            <button class="btn" id="backToLandingBtn">Back</button>
+            <button class="btn primary" id="launchAppBtn">Launch App</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="topbar glass">
+          <div>
+            <h2>SignBridge</h2>
+            <small id="configPreview"
+              >Mode: ASL · Speaker: Instant · Voice: English</small
+            >
+          </div>
+          <div class="row">
+            <span class="tag" id="statusTag">Status: waiting</span>
+            <button class="btn" id="resetProjectBtn">Change Setup</button>
+          </div>
+        </div>
+
+        <div class="main-grid">
+          <div class="panel glass">
+            <div class="video-wrap">
+              <video id="video" autoplay playsinline muted></video>
+              <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="controls-row" style="margin-top: 16px">
+              <button class="btn primary" id="startCameraBtn">
+                Start Camera
+              </button>
+              <button class="btn danger" id="stopCameraBtn">Stop Camera</button>
+              <button class="btn success" id="speakNowBtn">
+                Speak Sentence
+              </button>
+              <button class="btn" id="clearSentenceBtn">Clear Sentence</button>
+              <button class="btn" id="backspaceBtn">Backspace</button>
+            </div>
+
+            <div class="hint" style="margin-top: 12px">
+              Keep your hand clearly visible inside the frame. This prototype
+              currently recognizes a selected mapped set of assistive ASL-style
+              gestures.
+            </div>
+          </div>
+
+          <div style="display: grid; gap: 18px">
+            <div class="panel glass">
+              <div class="section-title">Detected Output</div>
+              <div class="output-box" id="outputBox">
+                <div class="big-text" id="gestureText">No gesture detected</div>
+                <div class="meta" id="metricsText">0 hands</div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Current Sentence</div>
+              <div class="sentence-box">
+                <div class="sentence-display" id="sentenceDisplay">
+                  Your recognized words will appear here...
+                </div>
+                <div class="controls-row" style="margin-top: 14px">
+                  <button class="btn" data-quick="Help">Help</button>
+                  <button class="btn" data-quick="Water">Water</button>
+                  <button class="btn" data-quick="Emergency">Emergency</button>
+                  <button class="btn" data-quick="Thank You">Thank You</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">History</div>
+              <div class="history-box">
+                <div class="history-list" id="historyList">
+                  <div class="history-item">No history yet.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Live Settings</div>
+              <div class="settings-box mini-grid">
+                <div>
+                  <label class="section-title" for="liveLanguage"
+                    >Language</label
+                  >
+                  <select class="select" id="liveLanguage">
+                    <option value="ASL">ASL</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="section-title" for="liveSpeechMode"
+                    >Speaker Mode</label
+                  >
+                  <select class="select" id="liveSpeechMode">
+                    <option value="instant">Instant</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="mute">Mute</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <script>
+      const landingScreen = document.getElementById("landingScreen");
+      const setupScreen = document.getElementById("setupScreen");
+      const mainScreen = document.getElementById("mainScreen");
+
+      const goToSetupBtn = document.getElementById("goToSetupBtn");
+      const aboutBtn = document.getElementById("aboutBtn");
+      const backToLandingBtn = document.getElementById("backToLandingBtn");
+      const launchAppBtn = document.getElementById("launchAppBtn");
+      const resetProjectBtn = document.getElementById("resetProjectBtn");
+
+      const languageSelect = document.getElementById("languageSelect");
+      const speechModeSelect = document.getElementById("speechModeSelect");
+      const voiceLangSelect = document.getElementById("voiceLangSelect");
+      const recognitionModeSelect = document.getElementById(
+        "recognitionModeSelect",
+      );
+      const liveLanguage = document.getElementById("liveLanguage");
+      const liveSpeechMode = document.getElementById("liveSpeechMode");
+      const configPreview = document.getElementById("configPreview");
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const startCameraBtn = document.getElementById("startCameraBtn");
+      const stopCameraBtn = document.getElementById("stopCameraBtn");
+      const speakNowBtn = document.getElementById("speakNowBtn");
+      const clearSentenceBtn = document.getElementById("clearSentenceBtn");
+      const backspaceBtn = document.getElementById("backspaceBtn");
+
+      const gestureText = document.getElementById("gestureText");
+      const metricsText = document.getElementById("metricsText");
+      const sentenceDisplay = document.getElementById("sentenceDisplay");
+      const historyList = document.getElementById("historyList");
+      const statusTag = document.getElementById("statusTag");
+      const outputBox = document.getElementById("outputBox");
+
+      let appConfig = {
+        language: "ASL",
+        speechMode: "instant",
+        voiceLang: "en-US",
+        recognitionMode: "prototype",
+      };
+
+      let hands = null;
+      let mediaStream = null;
+      let animationId = null;
+      let isProcessing = false;
+
+      let sentenceWords = [];
+      let historyItems = [];
+
+      let stableLabel = "";
+      let stableCount = 0;
+      let lastAcceptedLabel = "";
+      let lastAcceptedAt = 0;
+      let lastSpokenAt = 0;
+
+      const ACCEPT_THRESHOLD = 8;
+      const QUICK_ACCEPT_COOLDOWN = 2200;
+      const QUICK_SPEAK_COOLDOWN = 1400;
+
+      const gestureMap = {
+        single: {
+          thumbs_up: "Yes",
+          thumbs_down: "No",
+          open_palm: "Hello",
+          closed_fist: "Stop",
+          one_finger: "Help",
+          two_fingers: "Water",
+          three_fingers: "Food",
+          four_fingers: "Thank You",
+          phone_gesture: "Call",
+          v_sign: "Wait",
+        },
+        combo: {
+          "open_palm + open_palm": "I Need Assistance",
+          "closed_fist + open_palm": "Emergency",
+          "open_palm + two_fingers": "Please Wait",
+          "open_palm + thumbs_up": "Call Family",
+        },
+      };
+
+      function showScreen(screen) {
+        landingScreen.classList.add("hidden");
+        setupScreen.classList.add("hidden");
+        mainScreen.classList.add("hidden");
+        screen.classList.remove("hidden");
+      }
+
+      function updateConfigPreview() {
+        const speaker =
+          appConfig.speechMode === "instant"
+            ? "Instant"
+            : appConfig.speechMode === "sentence"
+              ? "Sentence"
+              : "Mute";
+
+        configPreview.textContent = `Mode: ${appConfig.language} · Speaker: ${speaker} · Voice: English`;
+        liveLanguage.value = appConfig.language;
+        liveSpeechMode.value = appConfig.speechMode;
+      }
+
+      function setStatus(message) {
+        statusTag.textContent = `Status: ${message}`;
+      }
+
+      function resizeCanvas() {
+        canvas.width = video.videoWidth || 960;
+        canvas.height = video.videoHeight || 640;
+      }
+
+      function speak(text) {
+        if (!window.speechSynthesis || appConfig.speechMode === "mute" || !text)
+          return;
+
+        const now = Date.now();
+        if (now - lastSpokenAt < QUICK_SPEAK_COOLDOWN) return;
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 1;
+        window.speechSynthesis.speak(utterance);
+
+        lastSpokenAt = now;
+      }
+
+      function updateSentenceDisplay() {
+        sentenceDisplay.textContent = sentenceWords.length
+          ? sentenceWords.join(" ")
+          : "Your recognized words will appear here...";
+      }
+
+      function renderHistory(items) {
+        if (!items.length) {
+          historyList.innerHTML =
+            '<div class="history-item">No history yet.</div>';
+          return;
+        }
+
+        historyList.innerHTML = items
+          .map((item) => `<div class="history-item">${item}</div>`)
+          .join("");
+      }
+
+      function addToHistory(text) {
+        if (!text) return;
+        historyItems.unshift(text);
+        historyItems = historyItems.slice(0, 8);
+        renderHistory(historyItems);
+      }
+
+      function appendWord(word, source = "gesture") {
+        if (!word) return;
+        sentenceWords.push(word);
+        updateSentenceDisplay();
+        addToHistory(`${source.toUpperCase()}: ${word}`);
+
+        if (appConfig.speechMode === "instant") {
+          speak(word);
+        }
+      }
+
+      function setOutputTheme(text) {
+        const emergencyTexts = ["Emergency", "I Need Assistance", "Help"];
+
+        if (emergencyTexts.includes(text)) {
+          outputBox.classList.add("danger-output");
+        } else {
+          outputBox.classList.remove("danger-output");
+        }
+      }
+
+      function distance(a, b) {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function detectGesture(landmarks) {
+        const wrist = landmarks[0];
+        const thumbTip = landmarks[4];
+        const thumbIP = landmarks[3];
+
+        const indexTip = landmarks[8];
+        const indexPIP = landmarks[6];
+
+        const middleTip = landmarks[12];
+        const middlePIP = landmarks[10];
+
+        const ringTip = landmarks[16];
+        const ringPIP = landmarks[14];
+
+        const pinkyTip = landmarks[20];
+        const pinkyPIP = landmarks[18];
+
+        const indexUp = indexTip.y < indexPIP.y;
+        const middleUp = middleTip.y < middlePIP.y;
+        const ringUp = ringTip.y < ringPIP.y;
+        const pinkyUp = pinkyTip.y < pinkyPIP.y;
+
+        const thumbExtended =
+          Math.abs(thumbTip.x - thumbIP.x) > 0.04 ||
+          Math.abs(thumbTip.y - thumbIP.y) > 0.04;
+
+        const otherFingersDown = !indexUp && !middleUp && !ringUp && !pinkyUp;
+
+        if (thumbExtended && otherFingersDown) {
+          if (thumbTip.y < wrist.y - 0.08) return "thumbs_up";
+          if (thumbTip.y > wrist.y + 0.08) return "thumbs_down";
+        }
+
+        if (!thumbExtended && indexUp && !middleUp && !ringUp && !pinkyUp) {
+          return "one_finger";
+        }
+
+        if (!thumbExtended && indexUp && middleUp && !ringUp && !pinkyUp) {
+          const gap = distance(indexTip, middleTip);
+          if (gap > 0.05) return "v_sign";
+          return "two_fingers";
+        }
+
+        if (!thumbExtended && indexUp && middleUp && ringUp && !pinkyUp) {
+          return "three_fingers";
+        }
+
+        if (!thumbExtended && indexUp && middleUp && ringUp && pinkyUp) {
+          return "four_fingers";
+        }
+
+        if (thumbExtended && !indexUp && !middleUp && !ringUp && pinkyUp) {
+          return "phone_gesture";
+        }
+
+        const allDown =
+          !thumbExtended && !indexUp && !middleUp && !ringUp && !pinkyUp;
+        if (allDown) return "closed_fist";
+
+        const allUpPalm =
+          indexUp && middleUp && ringUp && pinkyUp && thumbExtended;
+        if (allUpPalm) return "open_palm";
+
+        return "unknown";
+      }
+
+      function getMappedPhraseFromHands(detectedHands) {
+        if (!detectedHands.length) {
+          return {
+            phrase: "",
+            debugText: "0 hands",
+            usedGestures: [],
+          };
+        }
+
+        const validHands = detectedHands.filter((h) => h.gesture !== "unknown");
+        const debugText = detectedHands
+          .map((h, i) => `Hand ${i + 1}: ${h.gesture}`)
+          .join(" | ");
+
+        if (validHands.length === 0) {
+          return {
+            phrase: "Unknown Gesture",
+            debugText,
+            usedGestures: [],
+          };
+        }
+
+        if (validHands.length >= 2) {
+          const g1 = validHands[0].gesture;
+          const g2 = validHands[1].gesture;
+
+          const directKey = `${g1} + ${g2}`;
+          const reverseKey = `${g2} + ${g1}`;
+
+          const comboPhrase =
+            gestureMap.combo[directKey] || gestureMap.combo[reverseKey];
+
+          if (comboPhrase) {
+            return {
+              phrase: comboPhrase,
+              debugText,
+              usedGestures: [g1, g2],
+            };
+          }
+
+          return {
+            phrase: "Unknown Gesture",
+            debugText,
+            usedGestures: [g1, g2],
+          };
+        }
+
+        const singlePhrase =
+          gestureMap.single[validHands[0].gesture] || "Unknown Gesture";
+
+        return {
+          phrase: singlePhrase,
+          debugText,
+          usedGestures: [validHands[0].gesture],
+        };
+      }
+
+      async function initHands() {
+        hands = new Hands({
+          locateFile: (file) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+        });
+
+        hands.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.78,
+          minTrackingConfidence: 0.75,
+        });
+
+        hands.onResults((results) => {
+          ctx.save();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+          if (
+            results.multiHandLandmarks &&
+            results.multiHandLandmarks.length > 0
+          ) {
+            const detectedHands = [];
+
+            results.multiHandLandmarks.forEach((landmarks) => {
+              drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+                color: "#38bdf8",
+                lineWidth: 3,
+              });
+              drawLandmarks(ctx, landmarks, {
+                color: "#22c55e",
+                lineWidth: 2,
+                radius: 4,
+              });
+
+              const detected = detectGesture(landmarks);
+
+              detectedHands.push({
+                gesture: detected,
+              });
+            });
+
+            const { phrase, debugText, usedGestures } =
+              getMappedPhraseFromHands(detectedHands);
+            const currentStableKey = phrase || "No gesture detected";
+
+            if (currentStableKey === stableLabel) {
+              stableCount++;
+            } else {
+              stableLabel = currentStableKey;
+              stableCount = 1;
+            }
+
+            gestureText.textContent = phrase || "No gesture detected";
+            metricsText.textContent = `${results.multiHandLandmarks.length} hands · ${debugText}`;
+            setOutputTheme(phrase);
+
+            const now = Date.now();
+            if (
+              phrase &&
+              phrase !== "Unknown Gesture" &&
+              stableCount >= ACCEPT_THRESHOLD &&
+              phrase !== lastAcceptedLabel &&
+              now - lastAcceptedAt > QUICK_ACCEPT_COOLDOWN
+            ) {
+              lastAcceptedLabel = phrase;
+              lastAcceptedAt = now;
+              appendWord(
+                phrase,
+                usedGestures.length >= 2 ? "combo" : "gesture",
+              );
+            }
+          } else {
+            stableLabel = "";
+            stableCount = 0;
+            gestureText.textContent = "No gesture detected";
+            metricsText.textContent = "0 hands";
+            setOutputTheme("");
+          }
+
+          ctx.restore();
+        });
+      }
+
+      async function processFrame() {
+        if (!mediaStream || !hands) return;
+
+        if (video.readyState >= 2 && !isProcessing) {
+          isProcessing = true;
+          try {
+            await hands.send({ image: video });
+          } catch (error) {
+            console.error(error);
+            setStatus("processing error");
+          } finally {
+            isProcessing = false;
+          }
+        }
+
+        animationId = requestAnimationFrame(processFrame);
+      }
+
+      async function startCamera() {
+        try {
+          if (!hands) await initHands();
+
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: false,
+          });
+
+          video.srcObject = mediaStream;
+          await video.play();
+          resizeCanvas();
+          setStatus("camera started");
+          processFrame();
+        } catch (error) {
+          console.error(error);
+          setStatus("camera unavailable or permission denied");
+        }
+      }
+
+      function stopCamera() {
+        if (animationId) cancelAnimationFrame(animationId);
+        animationId = null;
+
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          mediaStream = null;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        gestureText.textContent = "No gesture detected";
+        metricsText.textContent = "0 hands";
+        stableLabel = "";
+        stableCount = 0;
+        setOutputTheme("");
+        setStatus("camera stopped");
+      }
+
+      goToSetupBtn.addEventListener("click", () => showScreen(setupScreen));
+
+      aboutBtn.addEventListener("click", () => {
+        alert(
+          "SignBridge is a browser-based assistive sign-to-speech project prototype built for communication support.",
+        );
+      });
+
+      backToLandingBtn.addEventListener("click", () =>
+        showScreen(landingScreen),
+      );
+
+      launchAppBtn.addEventListener("click", () => {
+        appConfig.language = languageSelect.value;
+        appConfig.speechMode = speechModeSelect.value;
+        appConfig.voiceLang = voiceLangSelect.value;
+        appConfig.recognitionMode = recognitionModeSelect.value;
+        updateConfigPreview();
+        showScreen(mainScreen);
+      });
+
+      resetProjectBtn.addEventListener("click", () => {
+        stopCamera();
+        showScreen(setupScreen);
+      });
+
+      liveLanguage.addEventListener("change", (e) => {
+        appConfig.language = e.target.value;
+        updateConfigPreview();
+      });
+
+      liveSpeechMode.addEventListener("change", (e) => {
+        appConfig.speechMode = e.target.value;
+        updateConfigPreview();
+      });
+
+      startCameraBtn.addEventListener("click", startCamera);
+      stopCameraBtn.addEventListener("click", stopCamera);
+
+      speakNowBtn.addEventListener("click", () => {
+        if (!sentenceWords.length) return;
+        const fullSentence = sentenceWords.join(" ");
+        addToHistory(`SPOKEN: ${fullSentence}`);
+        speak(fullSentence);
+      });
+
+      clearSentenceBtn.addEventListener("click", () => {
+        sentenceWords = [];
+        updateSentenceDisplay();
+      });
+
+      backspaceBtn.addEventListener("click", () => {
+        sentenceWords.pop();
+        updateSentenceDisplay();
+      });
+
+      document.querySelectorAll("[data-quick]").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          appendWord(btn.dataset.quick, "quick"),
+        );
+      });
+
+      window.addEventListener("resize", resizeCanvas);
+
+      updateConfigPreview();
+      renderHistory([]);
+      updateSentenceDisplay();
+    </script>
+  </body>
+</html>

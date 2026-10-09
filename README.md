@@ -1,165 +1,64 @@
-# SignBridge – Assistive Sign-to-Speech
+# SignBridge — gesture reliability update
 
-An AI-powered assistive communication system that converts sign language gestures into speech in real time, helping bridge the communication gap between hearing/speaking individuals and the deaf or hard-of-hearing community.
-
----
-
-## 🚀 Features
-
-* Real-time sign language recognition
-* Converts hand gestures into readable text
-* Text-to-speech output for communication assistance
-* User-friendly interface
-* Fast and responsive detection system
-* Assistive technology focused on accessibility and inclusion
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-* HTML
-* CSS
-* JavaScript
-
-### Backend
-
-* Python
-* Flask
-
-### AI / Machine Learning
-
-* OpenCV
-* MediaPipe
-* TensorFlow / Keras
-
----
-
-## 📂 Project Structure
-
-```bash
-SignBridge-Assistive-Sign-to-Speech/
-│
-├── static/
-├── templates/
-├── model/
-├── app.py
-├── requirements.txt
-├── README.md
-└── assets/
+## Run locally on Windows / VS Code
+Extract the ZIP into a new folder. Open `SignBridge-Production-MVP` in VS Code and run:
+```cmd
+python server.py
 ```
+Open **http://localhost:8000** in Chrome or Edge. Choose **Start Project → Launch App → Start Camera**. Keep the terminal open. Python 3.10+ is recommended; no pip packages are required for this local mode. Tracking/model files are bundled, so camera recognition does not need a CDN. Speech voices depend on the browser/OS.
 
----
+## I Need Assistance — corrected
+Show **both palms facing the camera**, with four fingers extended on each hand. Keep the hands slightly apart so neither covers the other. Thumbs can be open, relaxed or tucked. Hold for about **0.6 seconds after both hands are detected**.
 
-## ⚙️ Installation
+The screen must show **2 hands** and then **I Need Assistance**. In Instant speech mode it speaks once. Lower both hands for about half a second before repeating. If only one hand is detected, move farther from the camera and keep all fingers inside the frame. A quick-phrase button is also available.
 
-### 1. Clone the repository
+## All existing mappings
+These are **custom communication shortcuts**, not official ASL word translations.
 
-```bash
-git clone https://github.com/whohrshuu/SignBridge-Assistive-Sign-to-Speech.git
+| Pose | Output |
+|---|---|
+| Thumb up, other fingers curled | Yes |
+| Thumb down, other fingers curled | No |
+| One open palm, thumb extended | Hello |
+| Closed fist | Stop |
+| Index finger only, thumb tucked | Help |
+| Index and middle parallel, thumb tucked | Water |
+| Index/middle/ring extended, thumb tucked | Food |
+| Four fingers extended, thumb tucked | Thank You |
+| Thumb and pinky extended | Call |
+| Index and middle spread into V, thumb tucked | Wait |
+| Two open four-finger palms (thumbs may relax) | I Need Assistance |
+| Fist + open palm | Emergency |
+| Open palm + two parallel fingers | Please Wait |
+| Open palm + thumb up | Call Family |
+
+Either hand order works for every combination. Single-hand phrases require about 0.85 seconds to give the second hand time to enter. Hold a pose until accepted; it will not repeat continuously. Unsupported two-hand combinations show Unknown rather than falling back to a single-hand phrase.
+
+## Improvements
+- Shared gesture engine for local and deployed app.
+- Joint-angle and palm-relative geometry instead of fixed image-coordinate finger/gap thresholds; camera aspect ratio is accounted for.
+- Relaxed-thumb recognition for two-hand open palms.
+- Two-hand combinations get priority, with time-based dwell and short tracking-dropout tolerance.
+- Speech no longer silently drops a new phrase because another phrase was just spoken.
+- Guarded camera start/stop and no duplicate processing of the same video frame.
+- Bundled MediaPipe Hands 0.4.1675469240 and drawing utilities 0.3.1675466124.
+- Deployment frontend and API served together; no separate Cloudflare frontend required.
+
+## Tests and limits
+`node tests/test_gestures.cjs` checks 540 synthetic transformed poses, all 14 mappings, relaxed thumbs, unknown hands, and timing/repeat behavior.
+
+Local API tests:
+```cmd
+python -m unittest discover -s tests -p test_server.py -v
 ```
-
-### 2. Move into the project directory
-
-```bash
-cd SignBridge-Assistive-Sign-to-Speech
+Full backend/deployment tests (install requirements first):
+```cmd
+python -m pip install -r requirements.txt
+python -m unittest discover -s tests -v
 ```
+Eight Python tests and the JavaScript tests passed. Browser testing loaded the bundled camera runtime and verified assistance text, one speech event and no duplicate phrase, using injected test landmarks. Those are software checks, **not real-person gesture accuracy measurements**. Check the poses on your own webcam before presenting or deploying. No computer-vision system can guarantee recognition for every hand, lighting condition and occlusion.
 
-### 3. Create a virtual environment (optional but recommended)
+## Deployment
+Read **PRODUCTION_SETUP.md** for the simplified **Render + Supabase** setup. `api.py` serves the authenticated frontend and private APIs on one HTTPS address. Local `server.py` is not the public deployment server. The package is not yet live: your hosting and Supabase configuration are still required.
 
-```bash
-python -m venv venv
-```
-
-### 4. Activate virtual environment
-
-#### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-#### Mac/Linux
-
-```bash
-source venv/bin/activate
-```
-
-### 5. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 6. Run the project
-
-```bash
-python app.py
-```
-
----
-
-## 💡 How It Works
-
-1. The webcam captures hand gestures in real time.
-2. MediaPipe/OpenCV detects and tracks hand landmarks.
-3. The trained ML model predicts the corresponding sign.
-4. The predicted sign is converted into text.
-5. Text-to-speech converts the output into audible speech.
-
----
-
-## 📸 Screenshots
-
-
-
-```bash
-assets/homepage.png
-<img width="1902" height="921" alt="homepage" src="https://github.com/user-attachments/assets/7679889d-6e43-43b4-b4b4-00d668d8f956" />
-assets/detection.png
-<img width="1893" height="917" alt="detection" src="https://github.com/user-attachments/assets/10073ed9-6dc8-46ef-b0fa-f6b359d266f7" />
-```
-
----
-
-## 🌍 Future Improvements
-
-* Support for complete sentence formation
-* Multi-language speech output
-* Mobile application version
-* More accurate gesture recognition
-* Cloud deployment support
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome.
-
-1. Fork the repository
-2. Create a new branch
-3. Commit your changes
-4. Push to your branch
-5. Open a Pull Request
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.
-
----
-
-## 👨‍💻 Author
-
-**Harsh Bhagia**
-
-* GitHub: [https://github.com/whohrshuu](https://github.com/whohrshuu)
-* LinkedIn: [https://www.linkedin.com/in/harsh-bhagia-972365280/](https://www.linkedin.com/in/harsh-bhagia-972365280/)
-
----
-
-## ⭐ Support
-
-If you like this project, give it a star on GitHub ⭐
+Your local samples/history remain in `data/signbridge.sqlite3`. Back up or export your old dataset before replacing folders; use the fresh extracted folder to avoid old scripts being mixed with the update. Supabase stores each signed-in user's cloud data separately using the included row-level policies.

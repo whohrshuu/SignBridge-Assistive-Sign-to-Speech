@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SignBridge | Assistive Sign-to-Speech</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg1: #0f172a;
+        --bg2: #172554;
+        --bg3: #1e293b;
+        --card: rgba(255, 255, 255, 0.12);
+        --border: rgba(255, 255, 255, 0.18);
+        --text: #f8fafc;
+        --muted: rgba(248, 250, 252, 0.78);
+        --accent: #38bdf8;
+        --danger: #fb7185;
+        --success: #4ade80;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, #1d4ed8 0%, transparent 35%),
+          radial-gradient(circle at bottom right, #7c3aed 0%, transparent 30%),
+          linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+        padding: 20px;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+
+      .glass {
+        background: var(--card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .landing {
+        min-height: calc(100vh - 40px);
+        display: grid;
+        place-items: center;
+      }
+
+      .hero {
+        padding: 36px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .hero h1 {
+        font-size: clamp(34px, 5vw, 64px);
+        line-height: 1.04;
+        margin: 0 0 16px;
+      }
+
+      .hero p {
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 16px;
+        margin: 0 0 24px;
+        max-width: 680px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: var(--muted);
+        margin-bottom: 20px;
+        font-size: 13px;
+      }
+
+      .hero-card {
+        padding: 24px;
+        min-height: 360px;
+        display: grid;
+        align-content: space-between;
+        gap: 16px;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .feature-item {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .feature-item strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .row,
+      .controls-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .btn {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        border-radius: 14px;
+        padding: 12px 18px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .btn.primary {
+        background: linear-gradient(
+          135deg,
+          rgba(56, 189, 248, 0.55),
+          rgba(124, 58, 237, 0.55)
+        );
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+
+      .btn.danger {
+        background: rgba(251, 113, 133, 0.16);
+      }
+      .btn.success {
+        background: rgba(74, 222, 128, 0.16);
+      }
+
+      .select {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-size: 15px;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+
+      .select option {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .select:focus {
+        border-color: rgba(56, 189, 248, 0.7);
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+      }
+
+      .main-screen {
+        display: grid;
+        gap: 18px;
+      }
+
+      .topbar {
+        padding: 18px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .topbar h2 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      .topbar small {
+        color: var(--muted);
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .video-wrap {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      video,
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+      }
+
+      .section-title {
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .output-box,
+      .sentence-box,
+      .history-box,
+      .settings-box {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .big-text {
+        font-size: clamp(20px, 3vw, 32px);
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+
+      .sentence-display {
+        min-height: 90px;
+        font-size: 22px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .history-list {
+        display: grid;
+        gap: 10px;
+        max-height: 220px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .history-item {
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        line-height: 1.5;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .danger-output {
+        border-color: rgba(251, 113, 133, 0.55);
+        background: rgba(251, 113, 133, 0.12);
+      }
+
+      .spacer {
+        height: 2px;
+      }
+
+      .guide-toggle-btn {
+        width: 100%;
+        text-align: left;
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .guide-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .guide-list {
+        display: grid;
+        gap: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 4px;
+        margin-top: 10px;
+      }
+
+      .guide-entry {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        line-height: 1.5;
+      }
+
+      .guide-emoji {
+        font-size: 22px;
+        flex-shrink: 0;
+        width: 32px;
+        text-align: center;
+      }
+
+      .guide-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .guide-phrase {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text);
+      }
+
+      .guide-desc {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .guide-key {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 3px;
+        font-family: monospace;
+      }
+
+      .guide-section-label {
+        font-size: 11px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-top: 8px;
+        margin-bottom: 2px;
+        padding-left: 2px;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .main-grid,
+        .mini-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          padding: 22px;
+        }
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      /* SignBridge refinement: layout, accessibility and data studio */
+      .main-grid { align-items: start; }
+      :root { --card: rgba(15, 23, 42, .72); --border: rgba(148, 163, 184, .24); --muted: #bdc9dd; --shadow: 0 18px 54px rgba(2, 6, 23, .3); }
+      body { background: radial-gradient(circle at 12% -10%, rgba(6,182,212,.23), transparent 34%), radial-gradient(circle at 96% 5%, rgba(99,102,241,.23), transparent 27%), #0b1023; }
+      .glass { box-shadow: var(--shadow); }
+      .btn { font-weight: 650; letter-spacing: .01em; }
+      .btn:focus-visible, .select:focus-visible, .label-input:focus-visible, .guide-toggle-btn:focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
+      .btn.primary { background: linear-gradient(120deg,#0284c7,#4f46e5); border-color:rgba(125,211,252,.55); }
+      .btn.subtle { background: rgba(148,163,184,.13); padding: 9px 12px; font-size: 13px; }
+      .micro { color: #7dd3fc; float: right; font-size: 12px; letter-spacing: 0; text-transform: none; }
+      .studio-caption { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 6px 0 14px; }
+      .label-input { width:100%; padding:13px 14px; border-radius:12px; border:1px solid var(--border); color:#fff; background:rgba(3,7,18,.45); font:inherit; }
+      .stats-tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+      .stats-tiles > div { background:rgba(15,23,42,.65); border:1px solid var(--border); border-radius:14px; padding:12px 10px; }
+      .stats-tiles b { font-size:23px; display:block; color:#7dd3fc; }
+      .stats-tiles small { display:block; font-size:11px; color:var(--muted); margin-top:5px; }
+      .history-list { max-height:215px; overflow-y:auto; }
+      .history-item { overflow-wrap:anywhere; }
+      .guide-entry { align-items:start; }
+      @media (prefers-reduced-motion: reduce) { .btn { transition:none; } }
+     .auth-gate{position:fixed;inset:0;z-index:99999;background:#0f172a;display:grid;place-items:center;padding:20px}
+.auth-panel{width:min(100%,410px);padding:28px;background:#1e293b;border:1px solid #64748b;border-radius:20px;color:white;display:grid;gap:14px}
+.auth-panel form,.auth-panel label{display:grid;gap:10px}.auth-panel input{width:100%;padding:12px;border-radius:8px;border:1px solid #94a3b8}
+.auth-panel button,#logoutBtn{padding:12px;border:0;border-radius:10px;cursor:pointer;background:#38bdf8;color:#082f49;font-weight:700}
+#logoutBtn{position:fixed;top:12px;right:12px;z-index:2000}
+#authMessage{min-height:20px;color:#fde68a}
+</style>
+  </head>
+  <body><div id="authGate" class="auth-gate"><div class="auth-panel"><h1>SignBridge</h1><p>Sign in to access your private gesture dataset.</p><div id="authMessage" role="status" aria-live="polite"></div><form id="authForm"><label>Email <input id="authEmail" type="email" autocomplete="email" required></label><label>Password <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required></label><button type="submit">Sign in</button></form><button id="signUpBtn" type="button">Create an account</button><button id="googleLoginBtn" type="button">Continue with Google</button><button id="resetPasswordBtn" type="button">Reset password</button></div></div><button id="logoutBtn" type="button" hidden>Sign out</button>
+    <div class="app">
+      <section id="landingScreen" class="landing">
+        <div class="hero glass">
+          <div>
+            <div class="badge">
+              Final Year Project · Assistive Communication
+            </div>
+            <h1>SignBridge</h1>
+            <p>
+              An assistive sign-to-speech prototype for deaf and non-speaking
+              users. This app detects 21 hand landmarks with MediaPipe, converts mapped
+              gestures into speech, and lets you collect real labeled samples
+              to train a personal gesture recognizer.
+            </p>
+            <div class="row">
+              <button class="btn primary" id="goToSetupBtn">
+                Start Project
+              </button>
+              <button class="btn" id="aboutBtn">About</button>
+            </div>
+          </div>
+
+          <div class="hero-card glass">
+            <div>
+              <div class="feature-list">
+                <div class="feature-item">
+                  <strong>Live Hand Detection</strong>
+                  Detects one or two hands in real time using MediaPipe in the
+                  browser.
+                </div>
+                <div class="feature-item">
+                  <strong>Custom Gesture Shortcuts</strong>
+                  Focuses on useful phrases like Help, Water, Food, Emergency,
+                  and Call Family.
+                </div>
+                <div class="feature-item">
+                  <strong>Speech Output</strong>
+                  Converts recognized phrases into audio for real-life
+                  communication support.
+                </div>
+              </div>
+            </div>
+            <div class="hint">
+              The included gesture-to-phrase mappings are custom shortcuts, not
+              official ASL translations. Accuracy depends on lighting and
+              sample quality; do not rely on this app for emergencies.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="setupScreen" class="landing hidden">
+        <div class="glass" style="padding: 28px; max-width: 760px; width: 100%">
+          <div class="badge">Project Setup</div>
+          <h2 style="margin-top: 0; font-size: 34px">
+            Choose mode before starting
+          </h2>
+          <p style="color: var(--muted); line-height: 1.7; margin-bottom: 24px">
+            This version is optimized for gesture-to-speech communication with optional sample-based recognition. No account or sign-in required.
+          </p>
+
+          <div class="mini-grid">
+            <div>
+              <div class="section-title">Language</div>
+              <select class="select" id="languageSelect">
+                <option value="ASL">Custom gesture shortcuts</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="section-title">Speaker Mode</div>
+              <select class="select" id="speechModeSelect">
+                <option value="instant">
+                  Speak every detected phrase instantly
+                </option>
+                <option value="sentence">Speak only full sentence</option>
+                <option value="mute">Mute speaker</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="spacer"></div>
+
+          <div class="mini-grid" style="margin-top: 16px">
+            <div>
+              <div class="section-title">Voice Language</div>
+              <select class="select" id="voiceLangSelect">
+                <option value="en-US">English</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="section-title">Recognition Style</div>
+              <select class="select" id="recognitionModeSelect">
+                <option value="prototype">Built-in gesture mappings (ready to use)</option>
+                <option value="custom">My collected dataset (KNN, 3+ samples per label)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="controls-row" style="margin-top: 26px">
+            <button class="btn" id="backToLandingBtn">Back</button>
+            <button class="btn primary" id="launchAppBtn">Launch App</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="topbar glass">
+          <div>
+            <h2>SignBridge</h2>
+            <small id="configPreview"
+              >Mode: ASL · Speaker: Instant · Voice: English</small
+            >
+          </div>
+          <div class="row">
+            <span class="tag" id="statusTag">Status: waiting</span>
+            <button class="btn" id="resetProjectBtn">Change Setup</button>
+          </div>
+        </div>
+
+        <div class="main-grid">
+          <div class="panel glass">
+            <div class="video-wrap">
+              <video id="video" autoplay playsinline muted></video>
+              <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="controls-row" style="margin-top: 16px">
+              <button class="btn primary" id="startCameraBtn">
+                Start Camera
+              </button>
+              <button class="btn danger" id="stopCameraBtn">Stop Camera</button>
+              <button class="btn success" id="speakNowBtn">
+                Speak Sentence
+              </button>
+              <button class="btn" id="clearSentenceBtn">Clear Sentence</button>
+              <button class="btn" id="backspaceBtn">Backspace</button>
+            </div>
+
+            <div class="hint" style="margin-top: 12px">
+              Hold a gesture steady until accepted. Lower your hands briefly before repeating the same phrase. Enable dataset mode after
+              capturing three or more real examples for each label. Camera frames
+              stay in your browser; only landmarks are sent when saving or predicting.
+            </div>
+          </div>
+
+          <div style="display: grid; gap: 18px">
+            <div class="panel glass">
+              <div class="section-title">Detected Output</div>
+              <div class="output-box" id="outputBox">
+                <div class="big-text" id="gestureText" aria-live="polite">No gesture detected</div>
+                <div class="meta" id="metricsText">0 hands</div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Current Sentence</div>
+              <div class="sentence-box">
+                <div class="sentence-display" id="sentenceDisplay">
+                  Your recognized words will appear here...
+                </div>
+                <div class="controls-row" style="margin-top: 14px">
+                  <button class="btn" data-quick="I Need Assistance">I Need Assistance</button><button class="btn" data-quick="Help">Help</button>
+                  <button class="btn" data-quick="Water">Water</button>
+                  <button class="btn" data-quick="Emergency">Emergency</button>
+                  <button class="btn" data-quick="Thank You">Thank You</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Saved Activity <span class="micro" id="backendStatus">Connecting…</span></div>
+              <div class="history-box">
+                <div class="history-list" id="historyList">
+                  <div class="history-item">No history yet.</div>
+                </div>
+                <div class="controls-row" style="margin-top:12px">
+                  <button class="btn subtle" id="refreshHistoryBtn">Refresh history</button>
+                  <button class="btn subtle" id="clearHistoryBtn">Clear history</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Live Settings</div>
+              <div class="settings-box mini-grid">
+                <div>
+                  <label class="section-title" for="liveLanguage"
+                    >Language</label
+                  >
+                  <select class="select" id="liveLanguage">
+                    <option value="ASL">Custom shortcuts</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="section-title" for="liveSpeechMode"
+                    >Speaker Mode</label
+                  >
+                  <select class="select" id="liveSpeechMode">
+                    <option value="instant">Instant</option>
+                    <option value="sentence">Sentence</option>
+                    <option value="mute">Mute</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel glass" id="datasetPanel">
+              <div class="section-title">Dataset Studio <span class="micro" id="datasetStats">0 real samples</span></div>
+              <p class="studio-caption">Build a real dataset from your webcam. Hold a pose, enter the phrase it means to <strong>you</strong>, and save at least 3 examples per label. Custom recognition uses nearest-neighbor matching over normalized 21-point landmarks.</p>
+              <label class="section-title" for="sampleLabel">Sample label / spoken phrase</label>
+              <input class="label-input" id="sampleLabel" maxlength="48" placeholder="e.g., I need water" value="Help" list="suggestedLabels" />
+              <datalist id="suggestedLabels"><option value="Help"><option value="Water"><option value="Food"><option value="Thank You"><option value="Emergency"><option value="Hello"><option value="Yes"><option value="No"></datalist>
+              <div class="controls-row" style="margin: 12px 0">
+                <button class="btn primary" id="captureSampleBtn">Capture hand sample</button>
+                <button class="btn" id="refreshSamplesBtn">Refresh dataset</button>
+              </div>
+              <p class="studio-caption" id="sampleStatus" aria-live="polite">Start the camera to capture landmarks.</p>
+              <div class="stats-tiles"><div><b id="statSamples">0</b><small>Samples</small></div><div><b id="statLabels">0</b><small>Labels</small></div><div><b id="statTrained">0</b><small>Ready to recognize</small></div></div>
+              <div class="controls-row" style="margin: 12px 0">
+                <button class="btn subtle" id="exportCsvBtn">Export CSV</button>
+                <button class="btn subtle" id="exportJsonBtn">Export JSON</button>
+                <button class="btn danger" id="clearDatasetBtn">Delete samples</button>
+              </div>
+              <div class="history-list" id="sampleList" aria-live="polite"><div class="history-item">No labeled samples yet.</div></div>
+              <p class="studio-caption">Samples and activity are saved to this server's SQLite database. Anyone with access to this deployment may view or delete them: use a private deployment for personal data.</p>
+            </div>
+
+            <div class="panel glass">
+              <div class="section-title">Gesture Guide</div>
+              <button class="guide-toggle-btn" id="guideToggleBtn">
+                ▸ View built-in gestures &amp; mappings
+              </button>
+              <div id="guideContent" class="hidden">
+                <div class="guide-list">
+                  <div class="guide-section-label">Custom shortcuts — these are NOT standard ASL signs</div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✋</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Hello</div>
+                      <div class="guide-desc">All five fingers extended, palm open and facing forward</div>
+                      <div class="guide-key">open_palm</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✊</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Stop</div>
+                      <div class="guide-desc">All fingers curled tightly into a closed fist</div>
+                      <div class="guide-key">closed_fist</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">☝️</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Help</div>
+                      <div class="guide-desc">Only index finger pointing up, thumb and other fingers curled down</div>
+                      <div class="guide-key">one_finger</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✌️</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Water</div>
+                      <div class="guide-desc">Index and middle finger raised close together, other fingers curled</div>
+                      <div class="guide-key">two_fingers</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">🤟</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Food</div>
+                      <div class="guide-desc">Index, middle, and ring finger raised, thumb and pinky curled</div>
+                      <div class="guide-key">three_fingers</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">🖐️</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Thank You</div>
+                      <div class="guide-desc">All four fingers raised (index through pinky), thumb curled in</div>
+                      <div class="guide-key">four_fingers</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">👍</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Yes</div>
+                      <div class="guide-desc">Thumb pointing straight up, all other fingers curled down</div>
+                      <div class="guide-key">thumbs_up</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">👎</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">No</div>
+                      <div class="guide-desc">Thumb pointing straight down, all other fingers curled down</div>
+                      <div class="guide-key">thumbs_down</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✌️</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Wait</div>
+                      <div class="guide-desc">Index and middle finger spread apart in a V shape, other fingers curled</div>
+                      <div class="guide-key">v_sign</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">🤙</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Call</div>
+                      <div class="guide-desc">Thumb and pinky extended outward, index/middle/ring curled in</div>
+                      <div class="guide-key">phone_gesture</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-section-label" style="margin-top: 14px">Two-Hand Combo Gestures</div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✋✋</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">I Need Assistance</div>
+                      <div class="guide-desc">Show both palms toward the camera, four fingers extended on each hand. Thumbs may be relaxed. Keep hands apart and hold for 0.6 seconds.</div>
+                      <div class="guide-key">open_palm + open_palm</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✊✋</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Emergency</div>
+                      <div class="guide-desc">One hand as a closed fist, other hand as an open palm</div>
+                      <div class="guide-key">closed_fist + open_palm</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✋✌️</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Please Wait</div>
+                      <div class="guide-desc">One hand open palm, other hand showing two fingers together</div>
+                      <div class="guide-key">open_palm + two_fingers</div>
+                    </div>
+                  </div>
+
+                  <div class="guide-entry">
+                    <div class="guide-emoji">✋👍</div>
+                    <div class="guide-info">
+                      <div class="guide-phrase">Call Family</div>
+                      <div class="guide-desc">One hand open palm, other hand showing thumbs up</div>
+                      <div class="guide-key">open_palm + thumbs_up</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./gestures.js"></script>
+    <script src="./vendor/drawing_utils/drawing_utils.js"></script>
+    <script src="./vendor/hands/hands.js"></script>
+
+    <script src="./vendor/supabase.js"></script>
+    <script src="./config.js"></script>
+    <script src="./auth.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
